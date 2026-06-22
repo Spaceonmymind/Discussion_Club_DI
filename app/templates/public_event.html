@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ event.title }}{% endblock %}
+{% block content %}
+<section class="event-hero">
+    <div class="hero-copy">
+        <p class="eyebrow">15 июля | 10:00 | Москва</p>
+        <h1>{{ event.title }}</h1>
+        <p class="lead">{{ event.description }}</p>
+        <div class="hero-facts">
+            <span>{{ event.date.strftime('%d.%m.%Y') }}</span>
+            <span>{{ event.start_time.strftime('%H:%M') }}</span>
+            <span>{{ event.location }}</span>
+        </div>
+        <form class="join-panel inline-join" action="/event/{{ event.public_code }}/join" method="post">
+            <h2>Вход участника</h2>
+            <label>
+                <span>Ваше имя</span>
+                <input name="name" placeholder="Например, Анна">
+            </label>
+            <label class="check">
+                <input type="checkbox" name="is_anonymous" value="true">
+                <span>Участвовать анонимно</span>
+            </label>
+            <button class="btn primary" type="submit">Войти в дискуссию</button>
+        </form>
+    </div>
+    <div class="hero-stage" aria-hidden="true">
+        <div class="stage-badge">Live Q&A</div>
+        <div class="wave top-wave">
+            {% for i in range(34) %}<i></i>{% endfor %}
+        </div>
+        <div class="mic">
+            <span></span><span></span><span></span><span></span>
+        </div>
+        <div class="sound-rings">
+            <b></b><b></b><b></b>
+        </div>
+        <div class="wave bottom-wave">
+            {% for i in range(26) %}<i></i>{% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

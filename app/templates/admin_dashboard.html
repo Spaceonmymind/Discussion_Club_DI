@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Администратор{% endblock %}
+{% block content %}
+<section class="page-head">
+    <div>
+        <p class="eyebrow">Панель администратора</p>
+        <h1>Мероприятия и модераторы</h1>
+    </div>
+    <form method="post" action="/logout"><button class="btn ghost" type="submit">Выйти</button></form>
+</section>
+
+<section class="admin-grid">
+    <article class="panel">
+        <h2>Создать мероприятие</h2>
+        <form class="form-grid" method="post" action="/admin/events">
+            <input name="title" required placeholder="Название">
+            <input name="event_date" required type="date">
+            <input name="start_time" required type="time">
+            <input name="end_time" type="time">
+            <input name="location" placeholder="Место">
+            <select name="status">
+                <option value="draft">Черновик</option>
+                <option value="active">Активно</option>
+                <option value="finished">Завершено</option>
+            </select>
+            <input name="public_code" placeholder="Публичный код">
+            <textarea name="description" placeholder="Описание"></textarea>
+            <button class="btn primary" type="submit">Создать</button>
+        </form>
+    </article>
+
+    <article class="panel">
+        <h2>Создать модератора</h2>
+        <form class="compact-form" method="post" action="/admin/moderators">
+            <input name="name" required placeholder="Имя">
+            <input name="email" required type="email" placeholder="email">
+            <input name="password" required type="password" placeholder="Пароль">
+            <button class="btn primary" type="submit">Создать</button>
+        </form>
+        <div class="mini-list">
+            {% for moderator in moderators %}
+            <div class="mini-item"><strong>{{ moderator.name }}</strong><span>{{ moderator.email }}</span></div>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="panel-head">
+        <h2>Список мероприятий</h2>
+        <span class="muted">Статистика и быстрые действия</span>
+    </div>
+    <div class="event-table">
+        {% for event in events %}
+        <article class="event-row">
+            <form method="post" action="/admin/events/{{ event.id }}/edit" class="event-edit">
+                <input name="title" value="{{ event.title }}">
+                <input name="event_date" type="date" value="{{ event.date.isoformat() }}">
+                <input name="start_time" type="time" value="{{ event.start_time.strftime('%H:%M') }}">
+                <input name="end_time" type="time" value="{{ event.end_time.strftime('%H:%M') if event.end_time else '' }}">
+                <input name="location" value="{{ event.location }}">
+                <select name="status">
+                    {% for status in ['draft','active','finished'] %}
+                    <option value="{{ status }}" {% if event.status == status %}selected{% endif %}>{{ status }}</option>
+                    {% endfor %}
+                </select>
+                <input name="public_code" value="{{ event.public_code }}">
+                <textarea name="description">{{ event.description }}</textarea>
+                <button class="btn secondary" type="submit">Сохранить</button>
+            </form>
+            <div class="stats-row">
+                <span>Участников: {{ stats[event.id].participants }}</span>
+                <span>Вопросов: {{ stats[event.id].live_questions }}</span>
+                <span>Ответов: {{ stats[event.id].answers }}</span>
+            </div>
+            <div class="actions">
+                <a class="btn primary" href="/moderator/events/{{ event.id }}">Модерация</a>
+                <a class="btn secondary" href="/event/{{ event.public_code }}">Публичная</a>
+                <form method="post" action="/admin/events/{{ event.id }}/delete">
+                    <button class="btn danger" type="submit">Удалить</button>
+                </form>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

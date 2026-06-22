@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Вход{% endblock %}
+{% block content %}
+<section class="auth-wrap">
+    <form class="auth-card" method="post" action="/login">
+        <h1>Вход в панель</h1>
+        <p class="muted">Для администратора и модератора</p>
+        {% if error %}<div class="alert">{{ error }}</div>{% endif %}
+        <label>
+            <span>Email</span>
+            <input type="email" name="email" required placeholder="admin@club.ru">
+        </label>
+        <label>
+            <span>Пароль</span>
+            <input type="password" name="password" required placeholder="••••••••">
+        </label>
+        <button class="btn primary" type="submit">Войти</button>
+    </form>
+</section>
+{% endblock %}

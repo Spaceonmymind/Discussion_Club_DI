@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Дискуссия | {{ event.title }}{% endblock %}
+{% block content %}
+<section class="page-head">
+    <div>
+        <p class="eyebrow">{{ event.location }}</p>
+        <h1>{{ event.title }}</h1>
+        <p>{{ participant.name if not participant.is_anonymous else 'Анонимный участник' }}</p>
+    </div>
+    <span class="status active">{{ event.status }}</span>
+</section>
+
+<section class="discussion-grid" data-event-id="{{ event.id }}" data-participant-id="{{ participant.id }}">
+    <div class="stack">
+        <article class="panel">
+            <div class="panel-head">
+                <h2>Вопросы модератора</h2>
+                <span class="muted">Ответьте в удобном темпе</span>
+            </div>
+            <div id="preparedQuestions" class="question-list"></div>
+        </article>
+    </div>
+    <div class="stack">
+        <article class="panel ask-panel">
+            <h2>Задать вопрос спикеру</h2>
+            <textarea id="liveQuestionText" rows="5" placeholder="Напишите вопрос"></textarea>
+            <div class="row between">
+                <p id="questionNotice" class="notice"></p>
+                <button class="btn primary" id="sendLiveQuestion" type="button">Отправить вопрос</button>
+            </div>
+        </article>
+        <article class="panel">
+            <div class="panel-head">
+                <h2>Вопросы участников</h2>
+                <span class="muted">Обновляется автоматически</span>
+            </div>
+            <div id="liveQuestions" class="question-list"></div>
+        </article>
+    </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>DiscussionClub.initParticipant();</script>
+{% endblock %}
