@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Дискуссия | {{ event.title }}{% endblock %}
+{% block title %}Дайджест | {{ event.title }}{% endblock %}
 {% block content %}
 <section class="page-head">
     <div>
-        <p class="eyebrow">{{ event.location }}</p>
+        <p class="eyebrow">Дайджест-сессия</p>
         <h1>{{ event.title }}</h1>
         <p>{{ participant.name if not participant.is_anonymous else 'Анонимный участник' }}</p>
     </div>
@@ -14,25 +14,25 @@
     <div class="stack">
         <article class="panel">
             <div class="panel-head">
-                <h2>Вопросы модератора</h2>
-                <span class="muted">Ответьте в удобном темпе</span>
+                <h2>Фокус-вопросы</h2>
+                <span class="muted">Короткие ответы для дайджеста</span>
             </div>
             <div id="preparedQuestions" class="question-list"></div>
         </article>
     </div>
     <div class="stack">
         <article class="panel ask-panel">
-            <h2>Задать вопрос спикеру</h2>
-            <textarea id="liveQuestionText" rows="5" placeholder="Напишите вопрос"></textarea>
+            <h2>Добавить вопрос или инсайт</h2>
+            <textarea id="liveQuestionText" rows="5" placeholder="Сформулируйте коротко"></textarea>
             <div class="row between">
                 <p id="questionNotice" class="notice"></p>
-                <button class="btn primary" id="sendLiveQuestion" type="button">Отправить вопрос</button>
+                <button class="btn primary" id="sendLiveQuestion" type="button">Отправить</button>
             </div>
         </article>
         <article class="panel">
             <div class="panel-head">
-                <h2>Вопросы участников</h2>
-                <span class="muted">Обновляется автоматически</span>
+                <h2>Поток сессии</h2>
+                <span class="muted">Живое обновление</span>
             </div>
             <div id="liveQuestions" class="question-list"></div>
         </article>

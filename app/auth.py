@@ -76,10 +76,10 @@ def seed_data(db: Session) -> None:
     event = db.query(Event).filter(Event.public_code == "club-15july").first()
     if not event:
         event = Event(
-            title="Дискуссионный клуб",
-            description="Открытая встреча для вопросов, выступлений и совместного поиска решений.",
-            date=date(2026, 7, 15),
-            start_time=time(10, 0),
+            title="Пульс финтех-инноваций",
+            description="Дайджест-сессия о трендах, кейсах и практических выводах для команды.",
+            date=date(2026, 8, 13),
+            start_time=time(11, 0),
             end_time=time(12, 0),
             location="г. Москва, ул. Б. Татарская, д. 11А",
             status="active",
@@ -89,13 +89,27 @@ def seed_data(db: Session) -> None:
         db.add(event)
         db.flush()
         questions = [
-            "Какие ключевые проблемы вы видите в теме выступления?",
-            "Какие решения кажутся наиболее реалистичными?",
-            "Какие риски необходимо учитывать?",
-            "Какие вопросы стоит вынести на общую дискуссию?",
+            "Какая финтех-инновация выглядит наиболее применимой в ближайшие 6 месяцев?",
+            "Какие сигналы рынка стоит добавить в еженедельный мониторинг?",
+            "Где команда может быстрее всего проверить гипотезу?",
+            "Какой риск нужно вынести в итоговый дайджест?",
         ]
         for index, text in enumerate(questions, start=1):
             db.add(PreparedQuestion(event_id=event.id, text=text, order_index=index, is_active=True))
+    elif event.title == "Дискуссионный клуб":
+        event.title = "Пульс финтех-инноваций"
+        event.description = "Дайджест-сессия о трендах, кейсах и практических выводах для команды."
+        event.date = date(2026, 8, 13)
+        event.start_time = time(11, 0)
+        event.location = "г. Москва, ул. Б. Татарская, д. 11А"
+        replacement_questions = [
+            "Какая финтех-инновация выглядит наиболее применимой в ближайшие 6 месяцев?",
+            "Какие сигналы рынка стоит добавить в еженедельный мониторинг?",
+            "Где команда может быстрее всего проверить гипотезу?",
+            "Какой риск нужно вынести в итоговый дайджест?",
+        ]
+        for question, text in zip(event.prepared_questions, replacement_questions):
+            question.text = text
     db.commit()
 
 

@@ -1,10 +1,10 @@
 const DiscussionClub = (() => {
     const statusLabels = {
-        moderation: "на модерации",
-        approved: "одобрен",
+        moderation: "на проверке",
+        approved: "в потоке",
         rejected: "отклонён",
-        discussion: "в обсуждении",
-        answered: "отвечен",
+        discussion: "в фокусе",
+        answered: "закрыт",
     };
 
     async function jsonFetch(url, options = {}) {
@@ -45,9 +45,9 @@ const DiscussionClub = (() => {
 
     function moderatorActions(question) {
         return `
-            <button class="btn secondary" data-status="${question.id}:approved" type="button">Одобрить</button>
-            <button class="btn secondary" data-status="${question.id}:discussion" type="button">В обсуждение</button>
-            <button class="btn secondary" data-status="${question.id}:answered" type="button">Отвечен</button>
+            <button class="btn secondary" data-status="${question.id}:approved" type="button">В поток</button>
+            <button class="btn secondary" data-status="${question.id}:discussion" type="button">В фокус</button>
+            <button class="btn secondary" data-status="${question.id}:answered" type="button">Закрыть</button>
             <button class="btn danger" data-status="${question.id}:rejected" type="button">Отклонить</button>
             <button class="btn ghost" data-pin="${question.id}:${!question.is_pinned}" type="button">${question.is_pinned ? "Открепить" : "Закрепить"}</button>
             <input class="comment-input" data-comment-input="${question.id}" value="${escapeAttr(question.moderator_comment || "")}" placeholder="Комментарий">
@@ -84,19 +84,19 @@ const DiscussionClub = (() => {
                 <article class="question-card">
                     <p class="question-text">${escapeHtml(question.text)}</p>
                     ${question.description ? `<p class="muted">${escapeHtml(question.description)}</p>` : ""}
-                    <textarea rows="3" data-answer-text="${question.id}" placeholder="Ваш ответ"></textarea>
+                    <textarea rows="3" data-answer-text="${question.id}" placeholder="Короткий ответ"></textarea>
                     <div class="row between">
                         <p class="notice" data-answer-notice="${question.id}"></p>
                         <button class="btn secondary" data-answer="${question.id}" type="button">Отправить ответ</button>
                     </div>
                 </article>
-            `).join("") || "<p class='muted'>Подготовленных вопросов пока нет.</p>";
+            `).join("") || "<p class='muted'>Фокус-вопросов пока нет.</p>";
         }
 
         async function loadLive() {
             const questions = await jsonFetch(`/api/events/${eventId}/live-questions?participant_id=${participantId}`);
             liveBox.innerHTML = questions.map((question) => questionCard(question, "participant", participantId)).join("")
-                || "<p class='muted'>Пока нет одобренных вопросов.</p>";
+                || "<p class='muted'>В потоке пока нет сообщений.</p>";
         }
 
         document.querySelector("#sendLiveQuestion").addEventListener("click", async () => {
@@ -107,7 +107,7 @@ const DiscussionClub = (() => {
                     body: JSON.stringify({ participant_id: Number(participantId), text: input.value }),
                 });
                 input.value = "";
-                notice.textContent = "Вопрос отправлен на модерацию";
+                notice.textContent = "Сообщение отправлено на проверку";
                 await loadLive();
             } catch (error) {
                 notice.textContent = error.message;
@@ -126,7 +126,7 @@ const DiscussionClub = (() => {
                         body: JSON.stringify({ participant_id: Number(participantId), answer_text: textarea.value }),
                     });
                     textarea.value = "";
-                    answerNotice.textContent = "Ответ отправлен";
+                    answerNotice.textContent = "Ответ сохранён";
                 } catch (error) {
                     answerNotice.textContent = error.message;
                 }
@@ -157,7 +157,7 @@ const DiscussionClub = (() => {
                 const count = document.querySelector(`[data-count="${status}"]`);
                 count.textContent = items.length;
                 list.innerHTML = items.map((question) => questionCard(question, "moderator")).join("")
-                    || "<p class='muted'>Нет вопросов.</p>";
+                    || "<p class='muted'>Нет сообщений.</p>";
             });
         }
 

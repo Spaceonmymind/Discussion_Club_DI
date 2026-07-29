@@ -1,0 +1,14 @@
+services:
+  digest-session:
+    build: .
+    container_name: digest-session
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: sqlite:////data/discussion_club.db
+    ports:
+      - "8000:8000"
+    volumes:
+      - digest_session_data:/data
+
+volumes:
+  digest_session_data:

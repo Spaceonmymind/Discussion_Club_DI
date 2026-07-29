@@ -4,14 +4,14 @@
 <section class="page-head">
     <div>
         <p class="eyebrow">Панель администратора</p>
-        <h1>Мероприятия и модераторы</h1>
+        <h1>Сессии и модераторы</h1>
     </div>
     <form method="post" action="/logout"><button class="btn ghost" type="submit">Выйти</button></form>
 </section>
 
 <section class="admin-grid">
     <article class="panel">
-        <h2>Создать мероприятие</h2>
+        <h2>Создать сессию</h2>
         <form class="form-grid" method="post" action="/admin/events">
             <input name="title" required placeholder="Название">
             <input name="event_date" required type="date">
@@ -47,7 +47,7 @@
 
 <section class="panel">
     <div class="panel-head">
-        <h2>Список мероприятий</h2>
+        <h2>Список сессий</h2>
         <span class="muted">Статистика и быстрые действия</span>
     </div>
     <div class="event-table">
@@ -70,12 +70,12 @@
             </form>
             <div class="stats-row">
                 <span>Участников: {{ stats[event.id].participants }}</span>
-                <span>Вопросов: {{ stats[event.id].live_questions }}</span>
+                <span>Сообщений: {{ stats[event.id].live_questions }}</span>
                 <span>Ответов: {{ stats[event.id].answers }}</span>
             </div>
             <div class="actions">
                 <a class="btn primary" href="/moderator/events/{{ event.id }}">Модерация</a>
-                <a class="btn secondary" href="/event/{{ event.public_code }}">Публичная</a>
+                <a class="btn secondary" href="/event/{{ event.public_code }}">Страница входа</a>
                 <form method="post" action="/admin/events/{{ event.id }}/delete">
                     <button class="btn danger" type="submit">Удалить</button>
                 </form>

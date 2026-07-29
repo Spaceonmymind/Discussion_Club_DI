@@ -3,12 +3,12 @@
 {% block content %}
 <section class="page-head">
     <div>
-        <p class="eyebrow">Панель модератора</p>
+        <p class="eyebrow">Панель дайджест-сессии</p>
         <h1>{{ event.title }}</h1>
         <p>{{ event.date.strftime('%d.%m.%Y') }} | {{ event.start_time.strftime('%H:%M') }} | {{ event.location }}</p>
     </div>
     <div class="actions">
-        <a class="btn secondary" href="/event/{{ event.public_code }}">Страница участника</a>
+        <a class="btn secondary" href="/event/{{ event.public_code }}">Страница входа</a>
         <a class="btn secondary" href="/moderator/events/{{ event.id }}/export">Экспорт CSV</a>
         <form method="post" action="/logout"><button class="btn ghost" type="submit">Выйти</button></form>
     </div>
@@ -16,10 +16,10 @@
 
 <section class="moderator-layout" data-event-id="{{ event.id }}">
     <aside class="panel">
-        <h2>Подготовленные вопросы</h2>
+        <h2>Фокус-вопросы</h2>
         <form class="compact-form" method="post" action="/moderator/events/{{ event.id }}/prepared-questions">
-            <input name="text" required placeholder="Новый вопрос">
-            <input name="description" placeholder="Описание">
+            <input name="text" required placeholder="Новый фокус-вопрос">
+            <input name="description" placeholder="Контекст">
             <input name="order_index" type="number" value="{{ prepared_questions|length + 1 }}">
             <button class="btn primary" type="submit">Добавить</button>
         </form>
@@ -35,7 +35,7 @@
         </div>
     </aside>
     <div class="status-columns">
-        {% for status, title in [('moderation','На модерации'), ('approved','Одобренные'), ('discussion','В обсуждении'), ('answered','Отвеченные'), ('rejected','Отклонённые')] %}
+        {% for status, title in [('moderation','На проверке'), ('approved','В потоке'), ('discussion','В фокусе'), ('answered','Закрытые'), ('rejected','Отклонённые')] %}
         <section class="panel status-column">
             <div class="panel-head">
                 <h2>{{ title }}</h2>

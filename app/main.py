@@ -9,7 +9,7 @@ from .database import get_db
 from .models import User
 from .routes import admin, api, moderator, public
 
-app = FastAPI(title="Discussion Club")
+app = FastAPI(title="Digest Session")
 templates = Jinja2Templates(directory="app/templates")
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
