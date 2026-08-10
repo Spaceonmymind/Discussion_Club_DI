@@ -6,10 +6,20 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 from .database import Base, SessionLocal, engine, get_db
-from .models import Event, PreparedQuestion, User
+from .models import Event, LiveQuestion, Participant, ParticipantAnswer, PreparedQuestion, QuestionVote, User
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SESSION_COOKIE = "dc_user_id"
+
+DIGEST_QUESTIONS = [
+    "Какие темы дайджеста наиболее интересны лично Вам?",
+    "Какая тема за 2 квартал 2026 года, на Ваш взгляд, сильнее всего повлияет на индустрию в ближайший год?",
+    "Была полезной для вас сегодняшняя дайджест-сессия?",
+    "Хотели бы вы, чтобы такие дайджест-сессии проводились регулярно?",
+    "Какие новые темы и спикеров вы бы хотели видеть на следующей дайджест-сессии?",
+    "Что бы вы добавили или изменили в формате?",
+    'Хочу принять участие в пилоте агента "Импульс"',
+]
 
 
 def hash_password(password: str) -> str:
@@ -88,29 +98,36 @@ def seed_data(db: Session) -> None:
         )
         db.add(event)
         db.flush()
-        questions = [
-            "Какая финтех-инновация выглядит наиболее применимой в ближайшие 6 месяцев?",
-            "Какие сигналы рынка стоит добавить в еженедельный мониторинг?",
-            "Где команда может быстрее всего проверить гипотезу?",
-            "Какой риск нужно вынести в итоговый дайджест?",
-        ]
-        for index, text in enumerate(questions, start=1):
+        for index, text in enumerate(DIGEST_QUESTIONS, start=1):
             db.add(PreparedQuestion(event_id=event.id, text=text, order_index=index, is_active=True))
-    elif event.title == "Дискуссионный клуб":
+    else:
         event.title = "Пульс финтех-инноваций"
         event.description = "Дайджест-сессия о трендах, кейсах и практических выводах для команды."
         event.date = date(2026, 8, 13)
         event.start_time = time(11, 0)
         event.location = "г. Москва, ул. Б. Татарская, д. 11А"
-        replacement_questions = [
-            "Какая финтех-инновация выглядит наиболее применимой в ближайшие 6 месяцев?",
-            "Какие сигналы рынка стоит добавить в еженедельный мониторинг?",
-            "Где команда может быстрее всего проверить гипотезу?",
-            "Какой риск нужно вынести в итоговый дайджест?",
+        current_questions = [
+            question.text
+            for question in db.query(PreparedQuestion)
+            .filter(PreparedQuestion.event_id == event.id)
+            .order_by(PreparedQuestion.order_index, PreparedQuestion.id)
+            .all()
         ]
-        for question, text in zip(event.prepared_questions, replacement_questions):
-            question.text = text
+        if current_questions != DIGEST_QUESTIONS:
+            reset_event_data(db, event.id)
+            for index, text in enumerate(DIGEST_QUESTIONS, start=1):
+                db.add(PreparedQuestion(event_id=event.id, text=text, order_index=index, is_active=True))
     db.commit()
+
+
+def reset_event_data(db: Session, event_id: int) -> None:
+    live_question_ids = [id_ for (id_,) in db.query(LiveQuestion.id).filter(LiveQuestion.event_id == event_id).all()]
+    if live_question_ids:
+        db.query(QuestionVote).filter(QuestionVote.live_question_id.in_(live_question_ids)).delete(synchronize_session=False)
+    db.query(ParticipantAnswer).filter(ParticipantAnswer.event_id == event_id).delete(synchronize_session=False)
+    db.query(LiveQuestion).filter(LiveQuestion.event_id == event_id).delete(synchronize_session=False)
+    db.query(Participant).filter(Participant.event_id == event_id).delete(synchronize_session=False)
+    db.query(PreparedQuestion).filter(PreparedQuestion.event_id == event_id).delete(synchronize_session=False)
 
 
 def make_public_code() -> str:

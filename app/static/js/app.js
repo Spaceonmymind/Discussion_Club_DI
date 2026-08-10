@@ -23,6 +23,10 @@ const DiscussionClub = (() => {
         return question.participant_name || "Участник";
     }
 
+    function isOptInQuestion(question) {
+        return question.text.includes('пилоте агента "Импульс"');
+    }
+
     function questionCard(question, mode, participantId) {
         const pinned = question.is_pinned ? " pinned" : "";
         const status = `<span class="status ${question.status}">${statusLabels[question.status] || question.status}</span>`;
@@ -80,17 +84,25 @@ const DiscussionClub = (() => {
 
         async function loadPrepared() {
             const questions = await jsonFetch(`/api/events/${eventId}/prepared-questions`);
-            preparedBox.innerHTML = questions.map((question) => `
-                <article class="question-card">
-                    <p class="question-text">${escapeHtml(question.text)}</p>
-                    ${question.description ? `<p class="muted">${escapeHtml(question.description)}</p>` : ""}
-                    <textarea rows="3" data-answer-text="${question.id}" placeholder="Короткий ответ"></textarea>
-                    <div class="row between">
-                        <p class="notice" data-answer-notice="${question.id}"></p>
-                        <button class="btn secondary" data-answer="${question.id}" type="button">Отправить ответ</button>
-                    </div>
-                </article>
-            `).join("") || "<p class='muted'>Фокус-вопросов пока нет.</p>";
+            preparedBox.innerHTML = questions.map((question) => {
+                const input = isOptInQuestion(question)
+                    ? `<label class="check opt-in-check">
+                            <input type="checkbox" data-answer-check="${question.id}">
+                            <span>Да, хочу принять участие</span>
+                        </label>`
+                    : `<textarea rows="3" data-answer-text="${question.id}" placeholder="Короткий ответ"></textarea>`;
+                return `
+                    <article class="question-card">
+                        <p class="question-text">${escapeHtml(question.text)}</p>
+                        ${question.description ? `<p class="muted">${escapeHtml(question.description)}</p>` : ""}
+                        ${input}
+                        <div class="row between">
+                            <p class="notice" data-answer-notice="${question.id}"></p>
+                            <button class="btn secondary" data-answer="${question.id}" type="button">Отправить ответ</button>
+                        </div>
+                    </article>
+                `;
+            }).join("") || "<p class='muted'>Фокус-вопросов пока нет.</p>";
         }
 
         async function loadLive() {
@@ -119,13 +131,15 @@ const DiscussionClub = (() => {
             if (answerButton) {
                 const questionId = answerButton.dataset.answer;
                 const textarea = document.querySelector(`[data-answer-text="${questionId}"]`);
+                const checkbox = document.querySelector(`[data-answer-check="${questionId}"]`);
                 const answerNotice = document.querySelector(`[data-answer-notice="${questionId}"]`);
+                const answerText = checkbox ? (checkbox.checked ? "Да" : "Нет") : textarea.value;
                 try {
                     await jsonFetch(`/api/prepared-questions/${questionId}/answers`, {
                         method: "POST",
-                        body: JSON.stringify({ participant_id: Number(participantId), answer_text: textarea.value }),
+                        body: JSON.stringify({ participant_id: Number(participantId), answer_text: answerText }),
                     });
-                    textarea.value = "";
+                    if (textarea) textarea.value = "";
                     answerNotice.textContent = "Ответ сохранён";
                 } catch (error) {
                     answerNotice.textContent = error.message;

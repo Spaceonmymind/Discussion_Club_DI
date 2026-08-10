@@ -428,6 +428,16 @@ textarea {
 
 .check input { width: auto; }
 
+.opt-in-check {
+    width: max-content;
+    max-width: 100%;
+    margin: 2px 0 0;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(255,255,255,.055);
+}
+
 .btn {
     min-height: 42px;
     display: inline-flex;
