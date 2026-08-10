@@ -72,6 +72,19 @@
                 <span>Участников: {{ stats[event.id].participants }}</span>
                 <span>Сообщений: {{ stats[event.id].live_questions }}</span>
                 <span>Ответов: {{ stats[event.id].answers }}</span>
+                <span>Пилот Импульс: {{ stats[event.id].impulse_opt_ins|length }}</span>
+            </div>
+            <div class="mini-list">
+                <div class="mini-item">
+                    <strong>Пилот агента "Импульс"</strong>
+                    {% if stats[event.id].impulse_opt_ins %}
+                        {% for email in stats[event.id].impulse_opt_ins %}
+                        <span>{{ email }}</span>
+                        {% endfor %}
+                    {% else %}
+                        <span class="muted">Пока никто не согласился.</span>
+                    {% endif %}
+                </div>
             </div>
             <div class="actions">
                 <a class="btn primary" href="/moderator/events/{{ event.id }}">Модерация</a>

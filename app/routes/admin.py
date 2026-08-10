@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from ..auth import hash_password, require_admin
 from ..database import get_db
-from ..models import Event, ParticipantAnswer, User
+from ..models import Event, Participant, ParticipantAnswer, PreparedQuestion, User
 
 router = APIRouter(prefix="/admin")
 templates = Jinja2Templates(directory="app/templates")
@@ -32,11 +32,27 @@ def admin_dashboard(request: Request, db: Session = Depends(get_db), user: User 
             "participants": len(event.participants),
             "live_questions": len(event.live_questions),
             "answers": db.query(ParticipantAnswer).filter(ParticipantAnswer.event_id == event.id).count(),
+            "impulse_opt_ins": impulse_opt_ins(db, event.id),
         }
     return templates.TemplateResponse(
         "admin_dashboard.html",
         {"request": request, "user": user, "events": events, "moderators": moderators, "stats": stats},
     )
+
+
+def impulse_opt_ins(db: Session, event_id: int) -> list[str]:
+    rows = (
+        db.query(Participant.email, Participant.name)
+        .join(ParticipantAnswer, ParticipantAnswer.participant_id == Participant.id)
+        .join(PreparedQuestion, PreparedQuestion.id == ParticipantAnswer.prepared_question_id)
+        .filter(
+            ParticipantAnswer.event_id == event_id,
+            PreparedQuestion.text.ilike('%пилоте агента "Импульс"%'),
+            ParticipantAnswer.answer_text.ilike("да"),
+        )
+        .all()
+    )
+    return sorted({email or name or "Участник" for email, name in rows})
 
 
 @router.post("/events")
