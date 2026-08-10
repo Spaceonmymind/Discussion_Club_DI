@@ -5,7 +5,7 @@
     <div>
         <p class="eyebrow">Дайджест-сессия</p>
         <h1>{{ event.title }}</h1>
-        <p>{{ participant.name if not participant.is_anonymous else 'Анонимный участник' }}</p>
+        <p>{{ participant.email or participant.name }}</p>
     </div>
     <span class="status active">{{ event.status }}</span>
 </section>

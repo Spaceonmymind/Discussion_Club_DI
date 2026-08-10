@@ -5,6 +5,7 @@ from pydantic import BaseModel, EmailStr
 
 class ParticipantCreate(BaseModel):
     name: Optional[str] = None
+    email: Optional[str] = None
     is_anonymous: bool = False
 
 

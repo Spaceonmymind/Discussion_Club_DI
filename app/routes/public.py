@@ -29,8 +29,7 @@ def public_event(public_code: str, request: Request, db: Session = Depends(get_d
 @router.post("/event/{public_code}/join")
 def join_event(
     public_code: str,
-    name: str = Form(default=""),
-    is_anonymous: bool = Form(default=False),
+    email: str = Form(...),
     db: Session = Depends(get_db),
 ):
     event = db.query(Event).filter(Event.public_code == public_code).first()
@@ -38,13 +37,27 @@ def join_event(
         raise HTTPException(status_code=404, detail="Event not found")
     from secrets import token_urlsafe
 
-    participant = Participant(
-        event_id=event.id,
-        name=None if is_anonymous else (name.strip() or "Участник"),
-        is_anonymous=is_anonymous,
-        session_token=token_urlsafe(32),
+    normalized_email = email.strip().lower()
+    if "@" not in normalized_email or "." not in normalized_email:
+        raise HTTPException(status_code=400, detail="Invalid email")
+    participant = (
+        db.query(Participant)
+        .filter(Participant.event_id == event.id, Participant.email == normalized_email)
+        .first()
     )
-    db.add(participant)
+    if participant:
+        participant.session_token = token_urlsafe(32)
+        participant.name = normalized_email
+        participant.is_anonymous = False
+    else:
+        participant = Participant(
+            event_id=event.id,
+            name=normalized_email,
+            email=normalized_email,
+            is_anonymous=False,
+            session_token=token_urlsafe(32),
+        )
+        db.add(participant)
     db.commit()
     response = RedirectResponse(url=f"/event/{public_code}/discussion", status_code=303)
     response.set_cookie("dc_participant_id", str(participant.id), httponly=True, samesite="lax")

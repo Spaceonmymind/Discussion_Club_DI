@@ -59,10 +59,12 @@ class PreparedQuestion(Base, TimestampMixin):
 
 class Participant(Base):
     __tablename__ = "participants"
+    __table_args__ = (UniqueConstraint("event_id", "email", name="uq_participant_event_email"),)
 
     id = Column(Integer, primary_key=True, index=True)
     event_id = Column(Integer, ForeignKey("events.id"), nullable=False)
     name = Column(String(120), nullable=True)
+    email = Column(String(255), nullable=True, index=True)
     is_anonymous = Column(Boolean, default=False)
     session_token = Column(String(64), unique=True, index=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)

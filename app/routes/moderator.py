@@ -63,10 +63,10 @@ def export_event_questions(event_id: int, db: Session = Depends(get_db), _: User
     def rows():
         yield "type,status,votes,pinned,participant,text,answer_or_comment\n"
         for question in db.query(LiveQuestion).filter(LiveQuestion.event_id == event_id).order_by(LiveQuestion.created_at).all():
-            name = "Анонимно" if question.participant.is_anonymous else question.participant.name
+            name = question.participant.email or question.participant.name or "Участник"
             yield f'live,{question.status},{question.votes_count},{question.is_pinned},"{name}","{question.text}","{question.moderator_comment or ""}"\n'
         for answer in db.query(ParticipantAnswer).filter(ParticipantAnswer.event_id == event_id).order_by(ParticipantAnswer.created_at).all():
-            name = "Анонимно" if answer.participant.is_anonymous else answer.participant.name
+            name = answer.participant.email or answer.participant.name or "Участник"
             yield f'prepared-answer,,,, "{name}","{answer.prepared_question.text}","{answer.answer_text}"\n'
 
     filename = f"event-{event_id}-questions.csv"

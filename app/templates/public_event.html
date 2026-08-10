@@ -15,12 +15,8 @@
         <form class="join-panel inline-join" action="/event/{{ event.public_code }}/join" method="post">
             <h2>Присоединиться к сессии</h2>
             <label>
-                <span>Ваше имя</span>
-                <input name="name" placeholder="Например, Анна">
-            </label>
-            <label class="check">
-                <input type="checkbox" name="is_anonymous" value="true">
-                <span>Участвовать анонимно</span>
+                <span>Почта</span>
+                <input name="email" type="email" required placeholder="name@example.com">
             </label>
             <button class="btn primary" type="submit">Войти в дайджест</button>
         </form>

@@ -3,6 +3,7 @@ from secrets import token_hex
 
 from fastapi import Depends, HTTPException, Request, status
 from passlib.context import CryptContext
+from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
 from .database import Base, SessionLocal, engine, get_db
@@ -54,6 +55,7 @@ def require_staff(user: User = Depends(current_user)) -> User:
 
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
+    ensure_schema()
     db = SessionLocal()
     try:
         seed_data(db)
@@ -88,7 +90,7 @@ def seed_data(db: Session) -> None:
         event = Event(
             title="Пульс финтех-инноваций",
             description="Дайджест-сессия о трендах, кейсах и практических выводах для команды.",
-            date=date(2026, 8, 13),
+            date=date(2026, 8, 14),
             start_time=time(11, 0),
             end_time=time(12, 0),
             location="г. Москва, ул. Б. Татарская, д. 11А",
@@ -103,7 +105,7 @@ def seed_data(db: Session) -> None:
     else:
         event.title = "Пульс финтех-инноваций"
         event.description = "Дайджест-сессия о трендах, кейсах и практических выводах для команды."
-        event.date = date(2026, 8, 13)
+        event.date = date(2026, 8, 14)
         event.start_time = time(11, 0)
         event.location = "г. Москва, ул. Б. Татарская, д. 11А"
         current_questions = [
@@ -128,6 +130,17 @@ def reset_event_data(db: Session, event_id: int) -> None:
     db.query(LiveQuestion).filter(LiveQuestion.event_id == event_id).delete(synchronize_session=False)
     db.query(Participant).filter(Participant.event_id == event_id).delete(synchronize_session=False)
     db.query(PreparedQuestion).filter(PreparedQuestion.event_id == event_id).delete(synchronize_session=False)
+
+
+def ensure_schema() -> None:
+    inspector = inspect(engine)
+    participant_columns = {column["name"] for column in inspector.get_columns("participants")}
+    with engine.begin() as connection:
+        if "email" not in participant_columns:
+            connection.execute(text("ALTER TABLE participants ADD COLUMN email VARCHAR(255)"))
+        connection.execute(
+            text("CREATE UNIQUE INDEX IF NOT EXISTS uq_participant_event_email ON participants (event_id, email)")
+        )
 
 
 def make_public_code() -> str:

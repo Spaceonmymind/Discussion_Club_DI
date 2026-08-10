@@ -30,7 +30,7 @@ EVENT_STATUSES = {"draft", "active", "finished"}
 
 def question_to_dict(question: LiveQuestion) -> dict:
     participant = question.participant
-    name = "Анонимно" if participant.is_anonymous else participant.name
+    name = participant.email or participant.name or "Участник"
     return {
         "id": question.id,
         "event_id": question.event_id,
@@ -69,10 +69,22 @@ def create_participant(event_id: int, payload: ParticipantCreate, db: Session = 
     event = db.get(Event, event_id)
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
+    normalized_email = (payload.email or payload.name or "").strip().lower()
+    if not normalized_email:
+        raise HTTPException(status_code=400, detail="Email is required")
+    existing = db.query(Participant).filter(Participant.event_id == event_id, Participant.email == normalized_email).first()
+    if existing:
+        existing.session_token = token_urlsafe(32)
+        existing.name = normalized_email
+        existing.is_anonymous = False
+        db.commit()
+        db.refresh(existing)
+        return {"id": existing.id, "session_token": existing.session_token}
     participant = Participant(
         event_id=event_id,
-        name=None if payload.is_anonymous else (payload.name or "Участник"),
-        is_anonymous=payload.is_anonymous,
+        name=normalized_email,
+        email=normalized_email,
+        is_anonymous=False,
         session_token=token_urlsafe(32),
     )
     db.add(participant)
