@@ -376,6 +376,8 @@ main {
 .inline-join {
     width: min(520px, 100%);
     margin-top: 30px;
+    display: grid;
+    gap: 18px;
     background: rgba(8, 16, 13, .72);
 }
 
