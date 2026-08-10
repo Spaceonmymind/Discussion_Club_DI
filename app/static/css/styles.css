@@ -536,6 +536,22 @@ textarea {
     min-width: 190px;
 }
 
+.question-submit-actions {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    margin-top: 2px;
+}
+
+.question-submit-actions .notice {
+    min-height: 20px;
+    text-align: center;
+}
+
+.question-submit-actions .btn {
+    min-width: 190px;
+}
+
 .question-list {
     display: grid;
     gap: 10px;
@@ -725,5 +741,10 @@ textarea {
     .form-grid, .event-edit { grid-template-columns: 1fr; }
     .panel, .join-panel, .auth-card { padding: 18px; }
     .btn { width: 100%; }
+    .answer-actions .btn,
+    .question-submit-actions .btn {
+        width: auto;
+        max-width: 100%;
+    }
     .question-actions .btn { width: auto; flex: 1; }
 }
