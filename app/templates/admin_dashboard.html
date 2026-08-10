@@ -89,6 +89,9 @@
             <div class="actions">
                 <a class="btn primary" href="/moderator/events/{{ event.id }}">Модерация</a>
                 <a class="btn secondary" href="/event/{{ event.public_code }}">Страница входа</a>
+                <form method="post" action="/admin/events/{{ event.id }}/clear-data" onsubmit="return confirm('Очистить участников, ответы, вопросы спикерам и голоса по этой сессии?');">
+                    <button class="btn danger" type="submit">Очистить данные</button>
+                </form>
                 <form method="post" action="/admin/events/{{ event.id }}/delete">
                     <button class="btn danger" type="submit">Удалить</button>
                 </form>

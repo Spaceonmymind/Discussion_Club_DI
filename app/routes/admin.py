@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from ..auth import hash_password, require_admin
 from ..database import get_db
-from ..models import Event, Participant, ParticipantAnswer, PreparedQuestion, User
+from ..models import Event, LiveQuestion, Participant, ParticipantAnswer, PreparedQuestion, QuestionVote, User
 
 router = APIRouter(prefix="/admin")
 templates = Jinja2Templates(directory="app/templates")
@@ -92,6 +92,21 @@ def delete_event_form(event_id: int, db: Session = Depends(get_db), _: User = De
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
     db.delete(event)
+    db.commit()
+    return RedirectResponse(url="/admin", status_code=303)
+
+
+@router.post("/events/{event_id}/clear-data")
+def clear_event_data_form(event_id: int, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    event = db.get(Event, event_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    live_question_ids = db.query(LiveQuestion.id).filter(LiveQuestion.event_id == event_id).subquery()
+    db.query(QuestionVote).filter(QuestionVote.live_question_id.in_(live_question_ids)).delete(synchronize_session=False)
+    db.query(ParticipantAnswer).filter(ParticipantAnswer.event_id == event_id).delete(synchronize_session=False)
+    db.query(LiveQuestion).filter(LiveQuestion.event_id == event_id).delete(synchronize_session=False)
+    db.query(Participant).filter(Participant.event_id == event_id).delete(synchronize_session=False)
     db.commit()
     return RedirectResponse(url="/admin", status_code=303)
 
