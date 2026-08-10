@@ -98,7 +98,7 @@ const DiscussionClub = (() => {
                         <p class="question-text">${escapeHtml(question.text)}</p>
                         ${question.description ? `<p class="muted">${escapeHtml(question.description)}</p>` : ""}
                         ${input}
-                        <div class="row between">
+                        <div class="answer-actions">
                             <p class="notice" data-answer-notice="${question.id}">${answerText ? "Ответ сохранён" : ""}</p>
                             <button class="btn secondary" data-answer="${question.id}" type="button">${buttonText}</button>
                         </div>

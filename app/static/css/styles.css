@@ -520,6 +520,22 @@ textarea {
     font-weight: 700;
 }
 
+.answer-actions {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    margin-top: 2px;
+}
+
+.answer-actions .notice {
+    min-height: 20px;
+    text-align: center;
+}
+
+.answer-actions .btn {
+    min-width: 190px;
+}
+
 .question-list {
     display: grid;
     gap: 10px;
