@@ -83,22 +83,24 @@ const DiscussionClub = (() => {
         const notice = document.querySelector("#questionNotice");
 
         async function loadPrepared() {
-            const questions = await jsonFetch(`/api/events/${eventId}/prepared-questions`);
+            const questions = await jsonFetch(`/api/events/${eventId}/prepared-questions?participant_id=${participantId}`);
             preparedBox.innerHTML = questions.map((question) => {
+                const answerText = question.answer_text || "";
                 const input = isOptInQuestion(question)
                     ? `<label class="check opt-in-check">
-                            <input type="checkbox" data-answer-check="${question.id}">
+                            <input type="checkbox" data-answer-check="${question.id}" ${answerText === "Да" ? "checked" : ""}>
                             <span>Да, хочу принять участие</span>
                         </label>`
-                    : `<textarea rows="3" data-answer-text="${question.id}" placeholder="Короткий ответ"></textarea>`;
+                    : `<textarea rows="3" data-answer-text="${question.id}" placeholder="Короткий ответ">${escapeHtml(answerText)}</textarea>`;
+                const buttonText = answerText ? "Сохранить ответ" : "Отправить ответ";
                 return `
                     <article class="question-card">
                         <p class="question-text">${escapeHtml(question.text)}</p>
                         ${question.description ? `<p class="muted">${escapeHtml(question.description)}</p>` : ""}
                         ${input}
                         <div class="row between">
-                            <p class="notice" data-answer-notice="${question.id}"></p>
-                            <button class="btn secondary" data-answer="${question.id}" type="button">Отправить ответ</button>
+                            <p class="notice" data-answer-notice="${question.id}">${answerText ? "Ответ сохранён" : ""}</p>
+                            <button class="btn secondary" data-answer="${question.id}" type="button">${buttonText}</button>
                         </div>
                     </article>
                 `;
@@ -139,8 +141,8 @@ const DiscussionClub = (() => {
                         method: "POST",
                         body: JSON.stringify({ participant_id: Number(participantId), answer_text: answerText }),
                     });
-                    if (textarea) textarea.value = "";
                     answerNotice.textContent = "Ответ сохранён";
+                    answerButton.textContent = "Сохранить ответ";
                 } catch (error) {
                     answerNotice.textContent = error.message;
                 }

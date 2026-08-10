@@ -45,8 +45,8 @@ def question_to_dict(question: LiveQuestion) -> dict:
     }
 
 
-def prepared_to_dict(question: PreparedQuestion) -> dict:
-    return {
+def prepared_to_dict(question: PreparedQuestion, answer_text: Optional[str] = None) -> dict:
+    data = {
         "id": question.id,
         "event_id": question.event_id,
         "text": question.text,
@@ -54,6 +54,9 @@ def prepared_to_dict(question: PreparedQuestion) -> dict:
         "order_index": question.order_index,
         "is_active": question.is_active,
     }
+    if answer_text is not None:
+        data["answer_text"] = answer_text
+    return data
 
 
 def parse_date(value: str) -> date:
@@ -94,14 +97,25 @@ def create_participant(event_id: int, payload: ParticipantCreate, db: Session = 
 
 
 @router.get("/events/{event_id}/prepared-questions")
-def get_prepared_questions(event_id: int, db: Session = Depends(get_db)):
+def get_prepared_questions(event_id: int, participant_id: Optional[int] = None, db: Session = Depends(get_db)):
     questions = (
         db.query(PreparedQuestion)
         .filter(PreparedQuestion.event_id == event_id, PreparedQuestion.is_active.is_(True))
         .order_by(PreparedQuestion.order_index, PreparedQuestion.id)
         .all()
     )
-    return [prepared_to_dict(question) for question in questions]
+    answers = {}
+    if participant_id:
+        participant = db.get(Participant, participant_id)
+        if participant and participant.event_id == event_id:
+            answers = {
+                answer.prepared_question_id: answer.answer_text
+                for answer in db.query(ParticipantAnswer)
+                .filter(ParticipantAnswer.event_id == event_id, ParticipantAnswer.participant_id == participant_id)
+                .order_by(ParticipantAnswer.created_at)
+                .all()
+            }
+    return [prepared_to_dict(question, answers.get(question.id)) for question in questions]
 
 
 @router.post("/prepared-questions/{question_id}/answers")
@@ -110,15 +124,27 @@ def create_answer(question_id: int, payload: AnswerCreate, db: Session = Depends
     participant = db.get(Participant, payload.participant_id)
     if not question or not participant or participant.event_id != question.event_id:
         raise HTTPException(status_code=404, detail="Question or participant not found")
-    answer = ParticipantAnswer(
-        event_id=question.event_id,
-        prepared_question_id=question.id,
-        participant_id=participant.id,
-        answer_text=payload.answer_text.strip(),
-    )
-    if not answer.answer_text:
+    answer_text = payload.answer_text.strip()
+    if not answer_text:
         raise HTTPException(status_code=400, detail="Answer is empty")
-    db.add(answer)
+    answer = (
+        db.query(ParticipantAnswer)
+        .filter(
+            ParticipantAnswer.prepared_question_id == question.id,
+            ParticipantAnswer.participant_id == participant.id,
+        )
+        .first()
+    )
+    if answer:
+        answer.answer_text = answer_text
+    else:
+        answer = ParticipantAnswer(
+            event_id=question.event_id,
+            prepared_question_id=question.id,
+            participant_id=participant.id,
+            answer_text=answer_text,
+        )
+        db.add(answer)
     db.commit()
     return {"ok": True, "id": answer.id}
 
