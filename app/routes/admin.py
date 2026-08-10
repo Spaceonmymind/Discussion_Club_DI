@@ -41,18 +41,32 @@ def admin_dashboard(request: Request, db: Session = Depends(get_db), user: User 
 
 
 def impulse_opt_ins(db: Session, event_id: int) -> list[str]:
+    impulse_question_ids = [
+        question.id
+        for question in db.query(PreparedQuestion)
+        .filter(PreparedQuestion.event_id == event_id)
+        .all()
+        if 'пилоте агента "импульс"' in question.text.casefold()
+    ]
+    if not impulse_question_ids:
+        return []
+
     rows = (
-        db.query(Participant.email, Participant.name)
+        db.query(Participant.email, Participant.name, ParticipantAnswer.answer_text)
         .join(ParticipantAnswer, ParticipantAnswer.participant_id == Participant.id)
-        .join(PreparedQuestion, PreparedQuestion.id == ParticipantAnswer.prepared_question_id)
         .filter(
             ParticipantAnswer.event_id == event_id,
-            PreparedQuestion.text.ilike('%пилоте агента "Импульс"%'),
-            ParticipantAnswer.answer_text.ilike("да"),
+            ParticipantAnswer.prepared_question_id.in_(impulse_question_ids),
         )
         .all()
     )
-    return sorted({email or name or "Участник" for email, name in rows})
+    return sorted(
+        {
+            email or name or "Участник"
+            for email, name, answer_text in rows
+            if answer_text.strip().casefold() == "да"
+        }
+    )
 
 
 @router.post("/events")
