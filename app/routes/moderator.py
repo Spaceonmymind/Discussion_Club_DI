@@ -22,9 +22,21 @@ def moderator_dashboard(
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
     prepared = db.query(PreparedQuestion).filter(PreparedQuestion.event_id == event.id).order_by(PreparedQuestion.order_index).all()
+    prepared_answers = (
+        db.query(ParticipantAnswer)
+        .filter(ParticipantAnswer.event_id == event.id)
+        .order_by(ParticipantAnswer.created_at.desc())
+        .all()
+    )
     return templates.TemplateResponse(
         "moderator_dashboard.html",
-        {"request": request, "event": event, "prepared_questions": prepared, "user": user},
+        {
+            "request": request,
+            "event": event,
+            "prepared_questions": prepared,
+            "prepared_answers": prepared_answers,
+            "user": user,
+        },
     )
 
 

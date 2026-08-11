@@ -587,6 +587,14 @@ textarea {
     line-height: 1.45;
 }
 
+.moderator-answer-question {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.35;
+}
+
 .question-actions {
     display: flex;
     flex-wrap: wrap;
