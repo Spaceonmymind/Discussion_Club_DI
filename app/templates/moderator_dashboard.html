@@ -34,16 +34,14 @@
             {% endfor %}
         </div>
     </aside>
-    <div class="status-columns">
-        {% for status, title in [('moderation','На проверке'), ('approved','В потоке'), ('discussion','В фокусе'), ('answered','Закрытые'), ('rejected','Отклонённые')] %}
-        <section class="panel status-column">
+    <div class="moderator-questions">
+        <section class="panel">
             <div class="panel-head">
-                <h2>{{ title }}</h2>
-                <span class="count" data-count="{{ status }}">0</span>
+                <h2>Вопросы спикерам</h2>
+                <span class="count" id="moderatorLiveCount">0</span>
             </div>
-            <div class="question-list" data-moderation-list="{{ status }}"></div>
+            <div class="question-list" id="moderatorLiveQuestions"></div>
         </section>
-        {% endfor %}
     </div>
 </section>
 {% endblock %}

@@ -2,7 +2,7 @@ from datetime import date, time
 from secrets import token_urlsafe
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -67,6 +67,13 @@ def parse_time(value: Optional[str]) -> Optional[time]:
     return time.fromisoformat(value) if value else None
 
 
+def validate_participant_session(participant: Participant, request: Request) -> None:
+    cookie_id = request.cookies.get("dc_participant_id")
+    cookie_token = request.cookies.get("dc_participant_token")
+    if cookie_id != str(participant.id) or cookie_token != participant.session_token:
+        raise HTTPException(status_code=403, detail="Participant session is invalid")
+
+
 @router.post("/events/{event_id}/participants")
 def create_participant(event_id: int, payload: ParticipantCreate, db: Session = Depends(get_db)):
     event = db.get(Event, event_id)
@@ -97,7 +104,7 @@ def create_participant(event_id: int, payload: ParticipantCreate, db: Session = 
 
 
 @router.get("/events/{event_id}/prepared-questions")
-def get_prepared_questions(event_id: int, participant_id: Optional[int] = None, db: Session = Depends(get_db)):
+def get_prepared_questions(event_id: int, request: Request, participant_id: Optional[int] = None, db: Session = Depends(get_db)):
     questions = (
         db.query(PreparedQuestion)
         .filter(PreparedQuestion.event_id == event_id, PreparedQuestion.is_active.is_(True))
@@ -108,6 +115,7 @@ def get_prepared_questions(event_id: int, participant_id: Optional[int] = None, 
     if participant_id:
         participant = db.get(Participant, participant_id)
         if participant and participant.event_id == event_id:
+            validate_participant_session(participant, request)
             answers = {
                 answer.prepared_question_id: answer.answer_text
                 for answer in db.query(ParticipantAnswer)
@@ -119,11 +127,12 @@ def get_prepared_questions(event_id: int, participant_id: Optional[int] = None, 
 
 
 @router.post("/prepared-questions/{question_id}/answers")
-def create_answer(question_id: int, payload: AnswerCreate, db: Session = Depends(get_db)):
+def create_answer(question_id: int, payload: AnswerCreate, request: Request, db: Session = Depends(get_db)):
     question = db.get(PreparedQuestion, question_id)
     participant = db.get(Participant, payload.participant_id)
     if not question or not participant or participant.event_id != question.event_id:
         raise HTTPException(status_code=404, detail="Question or participant not found")
+    validate_participant_session(participant, request)
     answer_text = payload.answer_text.strip()
     if not answer_text:
         raise HTTPException(status_code=400, detail="Answer is empty")
@@ -150,10 +159,11 @@ def create_answer(question_id: int, payload: AnswerCreate, db: Session = Depends
 
 
 @router.post("/events/{event_id}/live-questions")
-def create_live_question(event_id: int, payload: LiveQuestionCreate, db: Session = Depends(get_db)):
+def create_live_question(event_id: int, payload: LiveQuestionCreate, request: Request, db: Session = Depends(get_db)):
     participant = db.get(Participant, payload.participant_id)
     if not participant or participant.event_id != event_id:
         raise HTTPException(status_code=404, detail="Participant not found")
+    validate_participant_session(participant, request)
     text = payload.text.strip()
     if len(text) < 3:
         raise HTTPException(status_code=400, detail="Question is too short")
@@ -165,13 +175,17 @@ def create_live_question(event_id: int, payload: LiveQuestionCreate, db: Session
 
 
 @router.get("/events/{event_id}/live-questions")
-def get_live_questions(event_id: int, participant_id: Optional[int] = None, db: Session = Depends(get_db)):
+def get_live_questions(event_id: int, request: Request, participant_id: Optional[int] = None, db: Session = Depends(get_db)):
     query = db.query(LiveQuestion).filter(LiveQuestion.event_id == event_id)
     if participant_id:
-        query = query.filter((LiveQuestion.status != "rejected") | (LiveQuestion.participant_id == participant_id))
+        participant = db.get(Participant, participant_id)
+        if not participant or participant.event_id != event_id:
+            raise HTTPException(status_code=404, detail="Participant not found")
+        validate_participant_session(participant, request)
+        query = query.filter(LiveQuestion.participant_id == participant_id)
     else:
-        query = query.filter(LiveQuestion.status.in_(["approved", "discussion", "answered"]))
-    questions = query.order_by(LiveQuestion.is_pinned.desc(), LiveQuestion.votes_count.desc(), LiveQuestion.created_at.desc()).all()
+        query = query.filter(LiveQuestion.id == 0)
+    questions = query.order_by(LiveQuestion.created_at.desc()).all()
     return [question_to_dict(question) for question in questions]
 
 
