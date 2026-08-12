@@ -11,24 +11,8 @@ const DiscussionClub = (() => {
         return response.json();
     }
 
-    function participantName(question) {
-        return question.participant_name || "Участник";
-    }
-
     function isOptInQuestion(question) {
         return question.text.includes('пилоте агента "Импульс"');
-    }
-
-    function questionCard(question, mode, participantId) {
-        const meta = mode === "moderator"
-            ? `<span>${escapeHtml(participantName(question))}</span>`
-            : "<span>ваш вопрос</span>";
-        return `
-            <article class="question-card" data-question-id="${question.id}">
-                <div class="question-meta">${meta}</div>
-                <p class="question-text">${escapeHtml(question.text)}</p>
-            </article>
-        `;
     }
 
     function escapeHtml(value) {
@@ -47,8 +31,6 @@ const DiscussionClub = (() => {
         const eventId = root.dataset.eventId;
         const participantId = root.dataset.participantId;
         const preparedBox = document.querySelector("#preparedQuestions");
-        const liveBox = document.querySelector("#liveQuestions");
-        const notice = document.querySelector("#questionNotice");
 
         async function loadPrepared() {
             const questions = await jsonFetch(`/api/events/${eventId}/prepared-questions?participant_id=${participantId}`);
@@ -75,27 +57,6 @@ const DiscussionClub = (() => {
             }).join("") || "<p class='muted'>Фокус-вопросов пока нет.</p>";
         }
 
-        async function loadLive() {
-            const questions = await jsonFetch(`/api/events/${eventId}/live-questions?participant_id=${participantId}`);
-            liveBox.innerHTML = questions.map((question) => questionCard(question, "participant", participantId)).join("")
-                || "<p class='muted'>Вы пока не задавали вопросов.</p>";
-        }
-
-        document.querySelector("#sendLiveQuestion").addEventListener("click", async () => {
-            const input = document.querySelector("#liveQuestionText");
-            try {
-                await jsonFetch(`/api/events/${eventId}/live-questions`, {
-                    method: "POST",
-                    body: JSON.stringify({ participant_id: Number(participantId), text: input.value }),
-                });
-                input.value = "";
-                notice.textContent = "Вопрос сохранён. Его увидит модератор.";
-                await loadLive();
-            } catch (error) {
-                notice.textContent = error.message;
-            }
-        });
-
         document.addEventListener("click", async (event) => {
             const answerButton = event.target.closest("[data-answer]");
             if (answerButton) {
@@ -118,27 +79,7 @@ const DiscussionClub = (() => {
         });
 
         loadPrepared();
-        loadLive();
-        setInterval(loadLive, 5000);
     }
 
-    function initModerator() {
-        const root = document.querySelector(".moderator-layout");
-        if (!root) return;
-        const eventId = root.dataset.eventId;
-
-        async function loadModeration() {
-            const questions = await jsonFetch(`/api/events/${eventId}/moderation/live-questions`);
-            const list = document.querySelector("#moderatorLiveQuestions");
-            const count = document.querySelector("#moderatorLiveCount");
-            count.textContent = questions.length;
-            list.innerHTML = questions.map((question) => questionCard(question, "moderator")).join("")
-                || "<p class='muted'>Вопросов пока нет.</p>";
-        }
-
-        loadModeration();
-        setInterval(loadModeration, 5000);
-    }
-
-    return { initParticipant, initModerator };
+    return { initParticipant };
 })();

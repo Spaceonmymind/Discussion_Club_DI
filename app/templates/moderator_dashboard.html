@@ -37,13 +37,6 @@
     <div class="moderator-questions">
         <section class="panel">
             <div class="panel-head">
-                <h2>Вопросы спикерам</h2>
-                <span class="count" id="moderatorLiveCount">0</span>
-            </div>
-            <div class="question-list" id="moderatorLiveQuestions"></div>
-        </section>
-        <section class="panel">
-            <div class="panel-head">
                 <h2>Ответы участников</h2>
                 <span class="count">{{ prepared_answers|length }}</span>
             </div>
@@ -63,7 +56,4 @@
         </section>
     </div>
 </section>
-{% endblock %}
-{% block scripts %}
-<script>DiscussionClub.initModerator();</script>
 {% endblock %}

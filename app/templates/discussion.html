@@ -10,7 +10,7 @@
     <span class="status active">{{ event.status }}</span>
 </section>
 
-<section class="discussion-grid" data-event-id="{{ event.id }}" data-participant-id="{{ participant.id }}">
+<section class="discussion-grid digest-only" data-event-id="{{ event.id }}" data-participant-id="{{ participant.id }}">
     <div class="stack">
         <article class="panel">
             <div class="panel-head">
@@ -18,23 +18,6 @@
                 <span class="muted">Короткие ответы для дайджеста</span>
             </div>
             <div id="preparedQuestions" class="question-list"></div>
-        </article>
-    </div>
-    <div class="stack">
-        <article class="panel ask-panel">
-            <h2>Вопросы спикерам</h2>
-            <textarea id="liveQuestionText" rows="5" placeholder="Задайте вопрос спикерам"></textarea>
-            <div class="question-submit-actions">
-                <p id="questionNotice" class="notice"></p>
-                <button class="btn primary" id="sendLiveQuestion" type="button">Отправить</button>
-            </div>
-        </article>
-        <article class="panel">
-            <div class="panel-head">
-                <h2>Мои вопросы</h2>
-                <span class="muted">Видны только вам и модератору</span>
-            </div>
-            <div id="liveQuestions" class="question-list"></div>
         </article>
     </div>
 </section>

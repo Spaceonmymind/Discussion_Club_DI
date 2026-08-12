@@ -501,6 +501,10 @@ textarea {
     align-items: start;
 }
 
+.discussion-grid.digest-only {
+    grid-template-columns: minmax(0, 1fr);
+}
+
 .stack, .compact-form, .mini-list, .event-table {
     display: grid;
     gap: 12px;
