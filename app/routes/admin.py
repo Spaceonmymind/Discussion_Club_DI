@@ -116,8 +116,9 @@ def clear_event_data_form(event_id: int, db: Session = Depends(get_db), _: User 
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
-    live_question_ids = db.query(LiveQuestion.id).filter(LiveQuestion.event_id == event_id).subquery()
-    db.query(QuestionVote).filter(QuestionVote.live_question_id.in_(live_question_ids)).delete(synchronize_session=False)
+    live_question_ids = [row[0] for row in db.query(LiveQuestion.id).filter(LiveQuestion.event_id == event_id).all()]
+    if live_question_ids:
+        db.query(QuestionVote).filter(QuestionVote.live_question_id.in_(live_question_ids)).delete(synchronize_session=False)
     db.query(ParticipantAnswer).filter(ParticipantAnswer.event_id == event_id).delete(synchronize_session=False)
     db.query(LiveQuestion).filter(LiveQuestion.event_id == event_id).delete(synchronize_session=False)
     db.query(Participant).filter(Participant.event_id == event_id).delete(synchronize_session=False)

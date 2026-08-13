@@ -34,7 +34,7 @@ const DiscussionClub = (() => {
 
         async function loadPrepared() {
             const questions = await jsonFetch(`/api/events/${eventId}/prepared-questions?participant_id=${participantId}`);
-            preparedBox.innerHTML = questions.map((question) => {
+            const cards = questions.map((question) => {
                 const answerText = question.answer_text || "";
                 const input = isOptInQuestion(question)
                     ? `<label class="check opt-in-check">
@@ -42,38 +42,48 @@ const DiscussionClub = (() => {
                             <span>Да, хочу принять участие</span>
                         </label>`
                     : `<textarea rows="3" data-answer-text="${question.id}" placeholder="Короткий ответ">${escapeHtml(answerText)}</textarea>`;
-                const buttonText = answerText ? "Сохранить ответ" : "Отправить ответ";
                 return `
                     <article class="question-card">
                         <p class="question-text">${escapeHtml(question.text)}</p>
                         ${question.description ? `<p class="muted">${escapeHtml(question.description)}</p>` : ""}
                         ${input}
-                        <div class="answer-actions">
-                            <p class="notice" data-answer-notice="${question.id}">${answerText ? "Ответ сохранён" : ""}</p>
-                            <button class="btn secondary" data-answer="${question.id}" type="button">${buttonText}</button>
-                        </div>
                     </article>
                 `;
-            }).join("") || "<p class='muted'>Фокус-вопросов пока нет.</p>";
+            }).join("");
+            preparedBox.innerHTML = cards
+                ? `${cards}
+                    <div class="answer-actions">
+                        <p class="notice" id="answersNotice"></p>
+                        <button class="btn secondary" id="saveAllAnswers" type="button">Сохранить ответы</button>
+                    </div>`
+                : "<p class='muted'>Фокус-вопросов пока нет.</p>";
         }
 
         document.addEventListener("click", async (event) => {
-            const answerButton = event.target.closest("[data-answer]");
-            if (answerButton) {
-                const questionId = answerButton.dataset.answer;
-                const textarea = document.querySelector(`[data-answer-text="${questionId}"]`);
-                const checkbox = document.querySelector(`[data-answer-check="${questionId}"]`);
-                const answerNotice = document.querySelector(`[data-answer-notice="${questionId}"]`);
-                const answerText = checkbox ? (checkbox.checked ? "Да" : "Нет") : textarea.value;
+            const saveButton = event.target.closest("#saveAllAnswers");
+            if (saveButton) {
+                const notice = document.querySelector("#answersNotice");
+                const answerFields = [
+                    ...document.querySelectorAll("[data-answer-text]"),
+                    ...document.querySelectorAll("[data-answer-check]"),
+                ];
+                const answers = answerFields
+                    .map((field) => ({
+                        questionId: field.dataset.answerText || field.dataset.answerCheck,
+                        answerText: field.matches("[data-answer-check]") ? (field.checked ? "Да" : "Нет") : field.value.trim(),
+                    }))
+                    .filter((answer) => answer.answerText);
                 try {
-                    await jsonFetch(`/api/prepared-questions/${questionId}/answers`, {
+                    saveButton.disabled = true;
+                    await Promise.all(answers.map((answer) => jsonFetch(`/api/prepared-questions/${answer.questionId}/answers`, {
                         method: "POST",
-                        body: JSON.stringify({ participant_id: Number(participantId), answer_text: answerText }),
-                    });
-                    answerNotice.textContent = "Ответ сохранён";
-                    answerButton.textContent = "Сохранить ответ";
+                        body: JSON.stringify({ participant_id: Number(participantId), answer_text: answer.answerText }),
+                    })));
+                    notice.textContent = "Ответы сохранены";
                 } catch (error) {
-                    answerNotice.textContent = error.message;
+                    notice.textContent = error.message;
+                } finally {
+                    saveButton.disabled = false;
                 }
             }
         });
