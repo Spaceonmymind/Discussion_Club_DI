@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from ..auth import hash_password, require_admin
 from ..database import get_db
-from ..models import Event, LiveQuestion, Participant, ParticipantAnswer, PreparedQuestion, QuestionVote, User
+from ..models import Event, LiveQuestion, Participant, ParticipantAnswer, QuestionVote, User
 
 router = APIRouter(prefix="/admin")
 templates = Jinja2Templates(directory="app/templates")
@@ -32,43 +32,11 @@ def admin_dashboard(request: Request, db: Session = Depends(get_db), user: User 
             "participants": len(event.participants),
             "live_questions": len(event.live_questions),
             "answers": db.query(ParticipantAnswer).filter(ParticipantAnswer.event_id == event.id).count(),
-            "impulse_opt_ins": impulse_opt_ins(db, event.id),
         }
     return templates.TemplateResponse(
         "admin_dashboard.html",
         {"request": request, "user": user, "events": events, "moderators": moderators, "stats": stats},
     )
-
-
-def impulse_opt_ins(db: Session, event_id: int) -> list[str]:
-    impulse_question_ids = [
-        question.id
-        for question in db.query(PreparedQuestion)
-        .filter(PreparedQuestion.event_id == event_id)
-        .all()
-        if 'пилоте агента "импульс"' in question.text.casefold()
-    ]
-    if not impulse_question_ids:
-        return []
-
-    rows = (
-        db.query(Participant.email, Participant.name, ParticipantAnswer.answer_text)
-        .join(ParticipantAnswer, ParticipantAnswer.participant_id == Participant.id)
-        .filter(
-            ParticipantAnswer.event_id == event_id,
-            ParticipantAnswer.prepared_question_id.in_(impulse_question_ids),
-        )
-        .all()
-    )
-    return sorted(
-        {
-            email or name or "Участник"
-            for email, name, answer_text in rows
-            if answer_text.strip().casefold() == "да"
-        }
-    )
-
-
 @router.post("/events")
 def create_event_form(
     title: str = Form(...),

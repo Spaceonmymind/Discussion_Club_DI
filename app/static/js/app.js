@@ -11,10 +11,6 @@ const DiscussionClub = (() => {
         return response.json();
     }
 
-    function isOptInQuestion(question) {
-        return question.text.includes('пилоте агента "Импульс"');
-    }
-
     function escapeHtml(value) {
         return String(value).replace(/[&<>"']/g, (char) => ({
             "&": "&amp;",
@@ -36,12 +32,7 @@ const DiscussionClub = (() => {
             const questions = await jsonFetch(`/api/events/${eventId}/prepared-questions?participant_id=${participantId}`);
             const cards = questions.map((question) => {
                 const answerText = question.answer_text || "";
-                const input = isOptInQuestion(question)
-                    ? `<label class="check opt-in-check">
-                            <input type="checkbox" data-answer-check="${question.id}" ${answerText === "Да" ? "checked" : ""}>
-                            <span>Да, хочу принять участие</span>
-                        </label>`
-                    : `<textarea rows="3" data-answer-text="${question.id}" placeholder="Короткий ответ">${escapeHtml(answerText)}</textarea>`;
+                const input = `<textarea rows="3" data-answer-text="${question.id}" placeholder="Короткий ответ">${escapeHtml(answerText)}</textarea>`;
                 return `
                     <article class="question-card">
                         <p class="question-text">${escapeHtml(question.text)}</p>
@@ -65,12 +56,11 @@ const DiscussionClub = (() => {
                 const notice = document.querySelector("#answersNotice");
                 const answerFields = [
                     ...document.querySelectorAll("[data-answer-text]"),
-                    ...document.querySelectorAll("[data-answer-check]"),
                 ];
                 const answers = answerFields
                     .map((field) => ({
-                        questionId: field.dataset.answerText || field.dataset.answerCheck,
-                        answerText: field.matches("[data-answer-check]") ? (field.checked ? "Да" : "Нет") : field.value.trim(),
+                        questionId: field.dataset.answerText,
+                        answerText: field.value.trim(),
                     }))
                     .filter((answer) => answer.answerText);
                 try {
